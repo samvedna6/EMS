@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Task, TaskStatus, User } from '@/types';
@@ -9,6 +10,7 @@ interface TaskContextType {
   tasks: Task[];
   addTask: (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'assignedBy'>) => Promise<Task | null>;
   updateTaskStatus: (taskId: string, status: TaskStatus) => Promise<Task | null>;
+  removeTask: (taskId: string) => Promise<boolean>;
   getTasksForEmployee: (employeeId: string) => Task[];
   getTaskCounts: () => { total: number; pending: number; active: number; completed: number; failed: number };
   getEmployeeNameById: (employeeId: string) => string;
@@ -91,6 +93,13 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
     return updatedTask;
   };
 
+  const removeTask = async (taskId: string): Promise<boolean> => {
+    if (!currentUser || currentUser.role !== 'admin') return false;
+    await new Promise(resolve => setTimeout(resolve, 300)); // Simulate API call
+    setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+    return true;
+  };
+
   const getTasksForEmployee = (employeeId: string): Task[] => {
     return tasks.filter(task => task.assignedTo === employeeId).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   };
@@ -111,7 +120,7 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <TaskContext.Provider value={{ tasks, addTask, updateTaskStatus, getTasksForEmployee, getTaskCounts, getEmployeeNameById, employees, loadingTasks }}>
+    <TaskContext.Provider value={{ tasks, addTask, updateTaskStatus, removeTask, getTasksForEmployee, getTaskCounts, getEmployeeNameById, employees, loadingTasks }}>
       {children}
     </TaskContext.Provider>
   );

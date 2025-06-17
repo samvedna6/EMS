@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Task, TaskStatus } from '@/types';
@@ -6,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import TaskStatusBadge from './TaskStatusBadge';
 import { useTasks } from '@/contexts/TaskContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Check, X, Play, User, CalendarDays, Info, CalendarClock } from 'lucide-react';
+import { Check, X, Play, User, CalendarDays, Info, CalendarClock, Trash2 } from 'lucide-react';
 import { format, parseISO, isPast, differenceInDays } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -29,7 +30,7 @@ interface TaskCardProps {
 }
 
 export default function TaskCard({ task, showAssignee = false }: TaskCardProps) {
-  const { updateTaskStatus, getEmployeeNameById } = useTasks();
+  const { updateTaskStatus, getEmployeeNameById, removeTask } = useTasks();
   const { currentUser } = useAuth();
   const { toast } = useToast();
 
@@ -44,6 +45,22 @@ export default function TaskCard({ task, showAssignee = false }: TaskCardProps) 
       toast({
         title: "Update Failed",
         description: `Could not update task "${task.title}".`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRemoveTask = async () => {
+    const success = await removeTask(task.id);
+    if (success) {
+      toast({
+        title: "Task Removed",
+        description: `Task "${task.title}" has been removed.`,
+      });
+    } else {
+      toast({
+        title: "Removal Failed",
+        description: `Could not remove task "${task.title}". You might not have permission.`,
         variant: "destructive",
       });
     }
@@ -107,6 +124,7 @@ export default function TaskCard({ task, showAssignee = false }: TaskCardProps) 
           </div>
         )}
       </CardContent>
+      
       {canPerformActions && (
         <CardFooter className="flex gap-2 pt-3 border-t mt-auto">
           {task.status === 'pending' && (
@@ -172,6 +190,30 @@ export default function TaskCard({ task, showAssignee = false }: TaskCardProps) 
               </AlertDialog>
             </>
           )}
+        </CardFooter>
+      )}
+
+      {currentUser?.role === 'admin' && task.status === 'completed' && (
+        <CardFooter className={cn("pt-3 border-t", !canPerformActions && "mt-auto")}>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm" className="w-full">
+                <Trash2 className="mr-2 h-4 w-4" /> Remove Task
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Remove Task?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to permanently remove the task: "{task.title}"? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleRemoveTask} className="bg-destructive hover:bg-destructive/90">Remove</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </CardFooter>
       )}
     </Card>
