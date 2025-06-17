@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import TaskStatusBadge from './TaskStatusBadge';
 import { useTasks } from '@/contexts/TaskContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Check, X, Play, User, CalendarDays, Info } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { Check, X, Play, User, CalendarDays, Info, CalendarClock } from 'lucide-react';
+import { format, parseISO, isPast, differenceInDays } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -20,6 +20,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { cn } from '@/lib/utils';
 
 
 interface TaskCardProps {
@@ -50,6 +51,27 @@ export default function TaskCard({ task, showAssignee = false }: TaskCardProps) 
 
   const canPerformActions = currentUser?.role === 'employee' && currentUser.id === task.assignedTo;
 
+  const getDueDateInfo = (dueDateString?: string) => {
+    if (!dueDateString) return { text: '', className: '' };
+    const dueDate = parseISO(dueDateString);
+    const today = new Date();
+    today.setHours(0,0,0,0); // Compare dates only
+
+    if (isPast(dueDate) && !isPast(today)) { // Due date is today or in the past
+         if (format(dueDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd')) {
+            return { text: `Due Today: ${format(dueDate, "MMM d, yyyy")}`, className: 'text-orange-500 font-medium' };
+         }
+        return { text: `Overdue: ${format(dueDate, "MMM d, yyyy")}`, className: 'text-red-600 font-bold' };
+    }
+    const daysUntilDue = differenceInDays(dueDate, today);
+    if (daysUntilDue <=3 && daysUntilDue > 0) {
+        return { text: `Due Soon: ${format(dueDate, "MMM d, yyyy")}`, className: 'text-yellow-600 font-medium' };
+    }
+    return { text: `Due: ${format(dueDate, "MMM d, yyyy")}`, className: 'text-muted-foreground' };
+  };
+  
+  const dueDateInfo = getDueDateInfo(task.dueDate);
+
   return (
     <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col h-full">
       <CardHeader className="pb-3">
@@ -57,15 +79,21 @@ export default function TaskCard({ task, showAssignee = false }: TaskCardProps) 
           <CardTitle className="text-xl font-headline mb-1">{task.title}</CardTitle>
           <TaskStatusBadge status={task.status} />
         </div>
-        <CardDescription className="text-xs text-muted-foreground">
-          <div className="flex items-center gap-1">
+        <CardDescription className="text-xs">
+          <div className="flex items-center gap-1 text-muted-foreground">
              <CalendarDays className="h-3.5 w-3.5" />
             Created: {format(parseISO(task.createdAt), "MMM d, yyyy 'at' h:mm a")}
           </div>
           {task.createdAt !== task.updatedAt && (
-             <div className="flex items-center gap-1 mt-0.5">
+             <div className="flex items-center gap-1 mt-0.5 text-muted-foreground">
                 <Info className="h-3.5 w-3.5" />
                 Updated: {format(parseISO(task.updatedAt), "MMM d, yyyy 'at' h:mm a")}
+            </div>
+          )}
+          {task.dueDate && (
+            <div className={cn("flex items-center gap-1 mt-0.5", dueDateInfo.className)}>
+              <CalendarClock className="h-3.5 w-3.5" />
+              {dueDateInfo.text}
             </div>
           )}
         </CardDescription>

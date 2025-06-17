@@ -19,4 +19,6 @@ export type Task = {
   status: TaskStatus;
   createdAt: string; // ISO Date string
   updatedAt: string; // ISO Date string
+  dueDate?: string; // Optional ISO Date string
 };
+

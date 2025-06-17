@@ -24,17 +24,23 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
   const { currentUser } = useAuth();
 
   useEffect(() => {
-    // Load initial tasks (simulating fetching from a backend)
     setLoadingTasks(true);
-    // Simulate API call
     setTimeout(() => {
       const storedTasks = localStorage.getItem('tasks');
       if (storedTasks) {
         try {
-          setTasks(JSON.parse(storedTasks));
+          const parsedTasks: Task[] = JSON.parse(storedTasks);
+          // Ensure all tasks have date fields as strings
+          const validatedTasks = parsedTasks.map(task => ({
+            ...task,
+            createdAt: task.createdAt ? new Date(task.createdAt).toISOString() : new Date().toISOString(),
+            updatedAt: task.updatedAt ? new Date(task.updatedAt).toISOString() : new Date().toISOString(),
+            dueDate: task.dueDate ? new Date(task.dueDate).toISOString() : undefined,
+          }));
+          setTasks(validatedTasks);
         } catch (e) {
           console.error("Failed to parse tasks from localStorage", e);
-          setTasks(mockTasks); // Fallback to mockTasks
+          setTasks(mockTasks); 
           localStorage.setItem('tasks', JSON.stringify(mockTasks));
         }
       } else {
@@ -46,8 +52,7 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    // Persist tasks to localStorage whenever they change
-    if (!loadingTasks) { // Only save if not in initial load phase
+    if (!loadingTasks) { 
       localStorage.setItem('tasks', JSON.stringify(tasks));
     }
   }, [tasks, loadingTasks]);
@@ -57,7 +62,6 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
 
   const addTask = async (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'assignedBy'>): Promise<Task | null> => {
     if (!currentUser || currentUser.role !== 'admin') return null;
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 300));
     const newTask: Task = {
       ...taskData,
@@ -66,13 +70,13 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
       status: 'pending',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      // dueDate is already part of taskData
     };
     setTasks(prevTasks => [...prevTasks, newTask]);
     return newTask;
   };
 
   const updateTaskStatus = async (taskId: string, status: TaskStatus): Promise<Task | null> => {
-     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 300));
     let updatedTask: Task | null = null;
     setTasks(prevTasks =>

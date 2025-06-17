@@ -9,12 +9,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, CalendarIcon } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 export default function CreateTaskForm() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [assignedTo, setAssignedTo] = useState('');
+  const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const { addTask, employees } = useTasks();
   const { toast } = useToast();
@@ -24,14 +29,20 @@ export default function CreateTaskForm() {
     if (!title || !description || !assignedTo) {
       toast({
         title: "Missing Information",
-        description: "Please fill out all fields.",
+        description: "Please fill out all fields (Title, Description, Assign To). Due date is optional.",
         variant: "destructive",
       });
       return;
     }
     setIsLoading(true);
     try {
-      const newTask = await addTask({ title, description, assignedTo });
+      const newTaskData: Parameters<typeof addTask>[0] = { 
+        title, 
+        description, 
+        assignedTo,
+        dueDate: dueDate ? dueDate.toISOString() : undefined,
+      };
+      const newTask = await addTask(newTaskData);
       if (newTask) {
         toast({
           title: "Task Created",
@@ -40,6 +51,7 @@ export default function CreateTaskForm() {
         setTitle('');
         setDescription('');
         setAssignedTo('');
+        setDueDate(undefined);
       } else {
          toast({
           title: "Creation Failed",
@@ -87,23 +99,50 @@ export default function CreateTaskForm() {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Detailed description of the task..."
               required
-              rows={4}
+              rows={3}
             />
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="assignedTo">Assign To</Label>
-            <Select value={assignedTo} onValueChange={setAssignedTo} required>
-              <SelectTrigger id="assignedTo" className="w-full">
-                <SelectValue placeholder="Select an employee" />
-              </SelectTrigger>
-              <SelectContent>
-                {employees.map((employee) => (
-                  <SelectItem key={employee.id} value={employee.id}>
-                    {employee.name} ({employee.username})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="assignedTo">Assign To</Label>
+              <Select value={assignedTo} onValueChange={setAssignedTo} required>
+                <SelectTrigger id="assignedTo" className="w-full">
+                  <SelectValue placeholder="Select an employee" />
+                </SelectTrigger>
+                <SelectContent>
+                  {employees.map((employee) => (
+                    <SelectItem key={employee.id} value={employee.id}>
+                      {employee.name} ({employee.username})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="dueDate">Due Date (Optional)</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !dueDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dueDate ? format(dueDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={dueDate}
+                    onSelect={setDueDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
         </CardContent>
         <CardFooter>
