@@ -3,9 +3,6 @@ import type { User, Task, Role, TaskStatus } from '@/types';
 
 export const mockUsers: User[] = [
   { id: 'admin1', username: 'admin', password: 'password', role: 'admin', name: 'Admin User' },
-  { id: 'emp1', username: 'employee1', password: 'password', role: 'employee', name: 'Alice Smith' },
-  { id: 'emp2', username: 'employee2', password: 'password', role: 'employee', name: 'Bob Johnson' },
-  { id: 'emp3', username: 'employee3', password: 'password', role: 'employee', name: 'Charlie Brown' },
   { id: 'emp4', username: 'ram_sagar', password: 'password', role: 'employee', name: 'Ram Sagar' },
   { id: 'emp5', username: 'samvedna_kumari', password: 'password', role: 'employee', name: 'Samvedna Kumari' },
   { id: 'emp6', username: 'ankit_kumar', password: 'password', role: 'employee', name: 'Ankit Kumar' },
