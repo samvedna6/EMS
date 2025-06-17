@@ -193,8 +193,8 @@ export default function TaskCard({ task, showAssignee = false }: TaskCardProps) 
         </CardFooter>
       )}
 
-      {currentUser?.role === 'admin' && task.status === 'completed' && (
-        <CardFooter className={cn("pt-3 border-t", !canPerformActions && "mt-auto")}>
+      {currentUser?.role === 'admin' && (
+        <CardFooter className={cn("pt-3 border-t", (!canPerformActions && task.status !== 'pending' && task.status !== 'active') && "mt-auto")}>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" size="sm" className="w-full">
