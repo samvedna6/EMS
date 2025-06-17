@@ -15,4 +15,3 @@ export const mockUsers: User[] = [
 ];
 
 export const mockTasks: Task[] = [];
-
