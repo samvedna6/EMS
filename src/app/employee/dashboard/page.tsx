@@ -36,7 +36,7 @@ export default function EmployeeDashboardPage() {
     return null; // Or a loading/access denied message
   }
 
-  const employeeTasks = getTasksForEmployee(currentUser.id);
+  const employeeTasks = getTasksForEmployee(currentUser.id || currentUser._id || '');
 
   return (
     <div className="space-y-8">
@@ -56,7 +56,7 @@ export default function EmployeeDashboardPage() {
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {employeeTasks.map(task => (
-            <TaskCard key={task.id} task={task} />
+            <TaskCard key={task.id || task._id} task={task} />
           ))}
         </div>
       )}

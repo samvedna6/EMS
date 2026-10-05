@@ -34,8 +34,10 @@ export default function TaskCard({ task, showAssignee = false }: TaskCardProps) 
   const { currentUser } = useAuth();
   const { toast } = useToast();
 
+  const taskId = task.id || task._id || '';
+
   const handleStatusUpdate = async (newStatus: TaskStatus) => {
-    const updatedTask = await updateTaskStatus(task.id, newStatus);
+    const updatedTask = await updateTaskStatus(taskId, newStatus);
     if (updatedTask) {
       toast({
         title: "Task Updated",
@@ -51,7 +53,7 @@ export default function TaskCard({ task, showAssignee = false }: TaskCardProps) 
   };
 
   const handleRemoveTask = async () => {
-    const success = await removeTask(task.id);
+    const success = await removeTask(taskId);
     if (success) {
       toast({
         title: "Task Removed",
@@ -66,7 +68,13 @@ export default function TaskCard({ task, showAssignee = false }: TaskCardProps) 
     }
   };
 
-  const canPerformActions = currentUser?.role === 'employee' && currentUser.id === task.assignedTo;
+  const currentUserId = currentUser?.id || currentUser?._id;
+  const isAssigned =
+    task.assignedTo === currentUserId ||
+    task.assignedToUser?._id === currentUserId ||
+    (typeof task.assignedTo === 'object' && (task.assignedTo as any)?._id === currentUserId);
+
+  const canPerformActions = currentUser?.role === 'employee' && isAssigned;
 
   const getDueDateInfo = (dueDateString?: string) => {
     if (!dueDateString) return { text: '', className: '' };

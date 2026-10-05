@@ -110,11 +110,14 @@ export default function CreateTaskForm() {
                   <SelectValue placeholder="Select an employee" />
                 </SelectTrigger>
                 <SelectContent>
-                  {employees.map((employee) => (
-                    <SelectItem key={employee.id} value={employee.id}>
-                      {employee.name} ({employee.username})
-                    </SelectItem>
-                  ))}
+                  {employees.map((employee) => {
+                    const empId = employee.id || employee._id || '';
+                    return (
+                      <SelectItem key={empId} value={empId}>
+                        {employee.name} ({employee.username})
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>

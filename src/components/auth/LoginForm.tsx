@@ -28,36 +28,60 @@ export default function LoginForm({ role, redirectPath }: LoginFormProps) {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Case 4: Pre-validation on frontend
+    if (!username.trim() || !password) {
+      const msg = 'Please enter both username/email and password.';
+      setError(msg);
+      toast({
+        title: "Validation Error",
+        description: msg,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const user = await login(username, password);
-      if (user && user.role === role) {
+      const user = await login(username.trim(), password);
+
+      const isRoleAllowed =
+        user.role === role || (role === 'admin' && user.role === 'hr');
+
+      if (isRoleAllowed) {
         toast({
           title: "Login Successful",
           description: `Welcome back, ${user.name}!`,
         });
         router.push(redirectPath);
-      } else if (user && user.role !== role) {
-        setError(`Access denied. This login is for ${role}s only.`);
+      } else {
+        const roleMsg = `Access denied. This portal is for ${role} accounts only. Your role is '${user.role}'.`;
+        setError(roleMsg);
         toast({
-          title: "Login Failed",
-          description: `Access denied. This login is for ${role}s only.`,
+          title: "Access Denied",
+          description: roleMsg,
           variant: "destructive",
         });
       }
-      else {
-        setError('Invalid username or password.');
-        toast({
-          title: "Login Failed",
-          description: "Invalid username or password.",
-          variant: "destructive",
-        });
+    } catch (err: any) {
+      let errMsg = err.response?.data?.message || err.message;
+      if (
+        !err.response &&
+        (err.code === 'ERR_NETWORK' ||
+          err.message === 'Network Error' ||
+          err.message?.includes('Network') ||
+          err.message?.includes('connect') ||
+          err.message?.includes('ECONNREFUSED'))
+      ) {
+        errMsg = 'Cannot connect to backend server at http://localhost:5000. Please ensure the backend server is running.';
+      } else if (!errMsg) {
+        errMsg = 'Invalid username/email or password.';
       }
-    } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
+
+      setError(errMsg);
       toast({
-        title: "Login Error",
-        description: "An unexpected error occurred. Please try again.",
+        title: "Login Failed",
+        description: errMsg,
         variant: "destructive",
       });
     } finally {
@@ -78,20 +102,20 @@ export default function LoginForm({ role, redirectPath }: LoginFormProps) {
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+          <CardContent className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="username">Username or Email</Label>
               <Input
                 id="username"
                 type="text"
-                placeholder="Enter your username"
+                placeholder={role === 'admin' ? "admin (or admin@taskflow.com)" : "samvedna_kumari (or email)"}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
                 className="text-base"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
@@ -104,9 +128,18 @@ export default function LoginForm({ role, redirectPath }: LoginFormProps) {
               />
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
+
+            <div className="bg-muted/50 rounded p-2.5 text-xs text-muted-foreground">
+              <strong>Test Credentials:</strong>
+              {role === 'admin' ? (
+                <p className="mt-0.5 font-mono">Username: <strong>admin</strong> | Password: <strong>password</strong></p>
+              ) : (
+                <p className="mt-0.5 font-mono">Username: <strong>samvedna_kumari</strong> | Password: <strong>password</strong></p>
+              )}
+            </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit" className="w-full text-lg py-6 shadow-md hover:shadow-lg transition-shadow" disabled={isLoading}>
+            <Button type="submit" className="w-full text-lg py-5 shadow-md hover:shadow-lg transition-shadow" disabled={isLoading}>
               {isLoading ? 'Logging in...' : 'Login'}
             </Button>
           </CardFooter>

@@ -37,8 +37,21 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.genkit/*
-.env*
+# environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+backend/.env
+backend/.env.local
+!.env.example
+!.env.local.example
+!backend/.env.example
+
+# backend local persistent db and deps
+backend/.data/
+backend/node_modules/
 
 # firebase
 firebase-debug.log
